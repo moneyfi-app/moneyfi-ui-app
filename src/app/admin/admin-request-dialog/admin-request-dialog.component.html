@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>Approve Request</h2>
+<div mat-dialog-content>
+  <p><strong>Name:</strong> {{ data.name }}</p>
+  <p><strong>Username:</strong> {{ data.username }}</p>
+  <p><strong>Description:</strong> {{ data.description }}</p>
+
+  <!-- Extra input only when requestType is 'other' -->
+  <mat-form-field 
+    *ngIf="data.requestType === 'GMAIL_SYNC_REQUEST_TYPE'" 
+    appearance="outline" 
+    class="full-width">
+    <mat-label>Enter Count</mat-label>
+    <input matInput type="number" [(ngModel)]="adminCount" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Enter Reference Number</mat-label>
+    <input matInput [(ngModel)]="enteredRefNumber" />
+  </mat-form-field>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-flat-button color="primary" (click)="onConfirm()">OK</button>
+</div>

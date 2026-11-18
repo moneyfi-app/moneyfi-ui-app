@@ -1,0 +1,136 @@
+<!-- Filter Controls -->
+<div class="filter-bar">
+
+  <div *ngFor="let s of statuses" class="status-filter" [class.selected]="selectedStatus == s.value"
+    (click)="filterStatus(s.value)">
+
+    {{s.label}}
+
+  </div>
+
+</div>
+
+<div *ngIf="isGridLoading" class="grid-loader">
+  <span class="spinner"></span> Loading Issues...
+</div>
+
+
+<!-- Reason Dialog -->
+<div *ngIf="showReasonDialog" class="reason-modal">
+  <div class="modal-content">
+    <h3>Select Reason for Ignoring</h3>
+
+    <select [(ngModel)]="selectedReason">
+      <option *ngFor="let reason of reasons" [value]="reason">{{ reason }}</option>
+    </select>
+
+    <!-- Show text input for "Other" -->
+    <input *ngIf="selectedReason === 'Other'" type="text" [(ngModel)]="customReason"
+      placeholder="Enter custom reason" />
+
+    <div class="modal-actions">
+      <button (click)="submitIgnoreReason()">Submit</button>
+      <button (click)="showReasonDialog = false">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Defects List -->
+<div class="defects-container" *ngIf="userDefects.length > 0">
+  <div class="defect-card" *ngFor="let defect of userDefects">
+    <h3>{{ defect.name }}</h3>
+    <p><strong>Username:</strong> {{ defect.username }}</p>
+    <p><strong>Reference No:</strong> {{ defect.referenceNumber }}</p>
+    <p><strong>Description:</strong> {{ defect.description }}</p>
+    <p><strong>Status:</strong> {{ defect.defectStatus }}</p>
+
+    <!-- Image -->
+    <div class="image-preview" (click)="viewImage(defect.username, defect.defectId)">
+      <img src="assets/image-placeholder.png" alt="View" />
+      <p class="click-text">Click to view image</p>
+    </div>
+
+    <!-- Status Update Buttons -->
+    <div class="status-buttons">
+      <button [disabled]="defect.defectStatus === 'COMPLETED' || defect.defectStatus === 'IGNORED'"
+        (click)="updateDefectStatus(defect.defectId, 'Solved')">
+        Solve
+      </button>
+
+      <button
+        [disabled]="defect.defectStatus === 'COMPLETED' || defect.defectStatus === 'PENDED' || defect.defectStatus === 'IGNORED'"
+        (click)="updateDefectStatus(defect.defectId, 'Pend')">
+        Pend
+      </button>
+
+      <button [disabled]="defect.defectStatus === 'COMPLETED' || defect.defectStatus === 'IGNORED'"
+        (click)="updateDefectStatus(defect.defectId, 'Ignore')">
+        Ignore
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div *ngIf="!isGridLoading && userDefects.length == 0">
+
+  No defects found
+
+</div>
+
+<div class="pagination-footer">
+
+  <div class="left">
+
+    Total : {{totalCount}}
+
+  </div>
+
+
+  <div class="middle">
+
+    <button (click)="previousPage()" [disabled]="offset == 0">
+
+      Previous
+
+    </button>
+
+
+    <span>
+      {{ offset + 1 }} - {{ endRecord }}
+    </span>
+
+    <button (click)="nextPage()" [disabled]="offset + limit >= totalCount">
+
+      Next
+
+    </button>
+
+  </div>
+
+
+
+  <div class="right">
+
+
+    <select [(ngModel)]="limit" (change)="changeLimit()">
+
+      <option [value]="10">10</option>
+
+      <option [value]="20">20</option>
+
+      <option [value]="50">50</option>
+
+    </select>
+
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div *ngIf="selectedImage" class="image-modal">
+  <div class="modal-content">
+    <span class="close-btn" (click)="selectedImage = null">&times;</span>
+    <img [src]="selectedImage" alt="Defect Image" />
+  </div>
+</div>

@@ -1,0 +1,485 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { AddIncomeDialogComponent } from '../add-income-dialog/add-income-dialog.component';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { ChartConfiguration, ChartData } from 'chart.js';
+import { NgChartsModule } from 'ng2-charts';
+import { MatSelectModule } from '@angular/material/select';
+import { CountUpDirective } from '../shared/directives/count-up.directive';
+import { ConfirmDeleteDialogComponent } from '../confirm-delete-dialog/confirm-delete-dialog.component';
+import { IncomeDeletedComponent } from '../income-deleted/income-deleted.component';
+import { incomeDeleted } from '../model/incomeDeleted';
+import { environment } from '../../environments/environment';
+import { CategoryService } from '../services/category.service';
+import { Category } from '../model/category-list';
+
+
+interface IncomeSource {
+  id: number;
+  source: string;
+  amount: number;
+  date: string;
+  category: string;
+  recurring: boolean;
+  is_deleted: boolean;
+}
+
+@Component({
+  selector: 'app-income',
+  templateUrl: './income.component.html',
+  styleUrls: ['./income.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    MatButtonModule,
+    FormsModule,
+    MatInputModule,
+    AddIncomeDialogComponent,
+    NgChartsModule,
+    MatSelectModule,
+    CountUpDirective
+  ]
+})
+export class IncomeComponent {
+  totalIncome: number = 0;
+  incomeSources: any[] = [];
+  deletedIncomeSources: IncomeSource[] = [];
+  loading: boolean = false;
+  recurringPercentage: number = 0;
+  selectedYear: number = new Date().getFullYear();
+  selectedMonth: number = 0; 
+  selectedCategory: string = '';
+  categories: Category[] = [];
+  months: string[] = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  isLoading = false;
+
+  currentPage: number = 0;
+  pageSize: number = 5;
+  pageSizeOptions: number[] = [5, 10, 15, 20, 50, 100];
+  sortBy: string = '';
+  sortOrder: 'asc' | 'desc' | '' = '';
+  
+
+  availableYears: number[] = [];
+  uniqueCategories: string[] = [];
+
+  public pieChartData: ChartData<'pie', number[], string> = {
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: [
+        '#FF6384',
+        '#36A2EB',
+        '#FFCE56',
+        '#4BC0C0',
+        '#9966FF',
+        '#FF9F40'
+      ]
+    }]
+  };
+
+  public pieChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'right',
+      }
+    }
+  };
+
+  constructor(public httpClient: HttpClient,private dialog: MatDialog, private router:Router, private toastr:ToastrService, private categoryService: CategoryService) {};
+
+  baseUrl = environment.BASE_URL;
+  
+  ngOnInit() {
+    this.categoryService.getIncomeCategories().subscribe(data => this.categories = data);
+    this.initializeFilters();
+    
+    // Set the default month to the current month (1-based index)
+    this.selectedMonth = new Date().getMonth() + 1; // Current month in 1-based index
+    this.selectedYear = new Date().getFullYear(); // Current year
+  
+    this.loadIncomeData();
+  }
+
+  initializeFilters() {
+    // Generate last 5 years
+    const currentYear = new Date().getFullYear();
+    this.availableYears = Array.from({length: 5}, (_, i) => currentYear - i);
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 0; // reset to first page
+    this.loadIncomeData(); // reload with new page size
+  }
+
+  deleted : boolean = false;
+  isDeletedClicked(){
+    // console.log("clicked");
+    this.deleted = true;
+    this.loadDeletedIncomeData()
+  }
+
+  totalCount: number = 0;
+  totalPages: number = 0;
+  loadIncomeData() {
+    this.loading = true;
+
+    const payload = {
+      category: this.selectedCategory === '' ? 'ALL' : this.selectedCategory,
+      deleteStatus: false,
+      date: this.getSelectedDate(),
+      offset: this.currentPage * this.pageSize,
+      limit: this.pageSize,
+      sortBy: this.sortBy,
+      sortOrder: this.sortOrder,
+      requestType: this.selectedMonth === 0 ? 'YEARLY' : 'MONTHLY'
+    };
+
+    this.httpClient.post<any>(`${this.baseUrl}/api/v1/transaction/income/get-incomes`, payload).subscribe({
+      next: (data) => {
+        if (data.data && data.data.length > 0) {
+          this.incomeSources = data.data;
+          this.totalCount = data.totalCount;
+          this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+          this.totalIncome = data.totalAmount;
+          this.updateChartData();
+        } else {
+          this.incomeSources = [];
+          this.toastr.warning('No income data available. Try adding income', 'No Data');
+        }
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load income data:', err);
+        try {
+            const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+            const message = errorObj?.message || errorObj?.error || 'Something went wrong';
+            this.toastr.error(message, 'Login Failed');
+          } catch (e) {
+            console.error('Failed to parse error:', err.error);
+          }
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+  onSort(column: string) {
+    if (this.sortBy === column) {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = column;
+      this.sortOrder = 'asc';
+    }
+    this.currentPage = 0;
+    this.loadIncomeData();
+  }
+
+  getSortIcon(column: string): string {
+    if (this.sortBy !== column) return 'fas fa-sort';
+    return this.sortOrder === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+  }
+
+  nextPage() {
+    if (this.currentPage + 1 < this.totalPages) {
+      this.currentPage++;
+      this.loadIncomeData();
+    }
+  }
+
+  previousPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.loadIncomeData();
+    }
+  }
+
+  getSelectedDate(): string {
+    if (this.selectedMonth === 0) {
+      return `${this.selectedYear}-01-01`;
+    }
+    return `${this.selectedYear}-${this.selectedMonth.toString().padStart(2, '0')}-01`;
+  }
+
+  loadDeletedIncomeData() {
+    this.loading = true;
+
+    const url = `${this.baseUrl}/api/v1/transaction/income/${this.selectedMonth}/${this.selectedYear}/deleted-incomes-list/get`;
+    this.httpClient.get<incomeDeleted[]>(url).subscribe({
+      next: (data) => {
+        if (data && data.length > 0) {
+          const dialogRef = this.dialog.open(IncomeDeletedComponent, {
+            width: '850px', // Makes dialog wider
+            maxHeight: '90vh', // Keeps it scrollable on small screens
+            data: { deletedIncomes: data }
+          });
+
+          dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+              this.toastr.success('Income Reverted Successfully');
+              this.deleted = false;
+              this.loadIncomeData();
+            }
+            else {
+              this.deleted = false;
+              this.loadIncomeData();
+            }
+          });
+
+        } else {
+          this.deletedIncomeSources = [];
+          this.toastr.warning('No deleted income data available in this range', 'No Data');
+        }
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load income data:', err);
+        try {
+            const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+            const message = errorObj?.message || errorObj?.error || 'Something went wrong';
+            this.toastr.error(message, 'Login Failed');
+          } catch (e) {
+            console.error('Failed to parse error:', err.error);
+            // this.toastr.error('An error occurred', 'Login Failed');
+          }
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+
+  addIncome() {
+    const dialogRef = this.dialog.open(AddIncomeDialogComponent, {
+      width: '500px',
+      panelClass: 'income-dialog',
+    });
+  
+    dialogRef.afterClosed().subscribe((result) => {
+
+      const formattedDate = this.formatDate(result.date);
+      const incomeData = {
+        ...result, // This should contain fields like source, amount, date, categoryId, recurring, etc.
+        date:formattedDate,
+      };
+
+      this.httpClient.post(`${this.baseUrl}/api/v1/transaction/income/save`, incomeData).subscribe({
+        next: (response) => {
+          this.loadIncomeData();
+          this.updateChartData();
+          this.resetFilters();
+          this.toastr.success("Income " + incomeData.source + " added succesfully");
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Failed to add income:', error);
+          try {
+            const errorObj = typeof error.error === 'string' ? JSON.parse(error.error) : error.error;
+            this.toastr.error(errorObj.message);
+          } catch (e) {
+            console.error('Failed to parse error:', error.error);
+          }
+      }
+      });
+    });
+  }
+
+
+  updateIncome(income: IncomeSource) {
+    const dialogRef = this.dialog.open(AddIncomeDialogComponent, {
+      width: '500px',
+      panelClass: 'income-dialog',
+      data: { ...income, isUpdate:true }, // Pass the income data to the dialog
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      const formattedDate = this.formatDate(result.date);
+      const updatedIncomeData = {
+        ...result, // Updated fields from the dialog form
+        date: formattedDate,
+      };
+
+      this.httpClient.put(`${this.baseUrl}/api/v1/transaction/income/update/${income.id}`, updatedIncomeData).subscribe({
+        next: (response) => {
+          this.toastr.success("Income of " + updatedIncomeData.source + " updated successfully");
+          this.loadIncomeData();
+        },
+        error: (error) => {
+          console.error('Failed to update income:', error);
+
+          try {
+            const errorObj = typeof error.error === 'string' ? JSON.parse(error.error) : error.error;
+            this.toastr.error(errorObj.message);
+          } catch (e) {
+            console.error('Failed to parse error:', error.error);
+          }
+        },
+      });
+    });
+  }
+
+  formatDate(date: string | Date): string {
+    const inputDate = new Date(date);
+    const now = new Date(); // current time
+    inputDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
+    const yyyy = inputDate.getFullYear();
+    const mm = String(inputDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(inputDate.getDate()).padStart(2, '0');
+    const hh = String(inputDate.getHours()).padStart(2, '0');
+    const min = String(inputDate.getMinutes()).padStart(2, '0');
+    const ss = String(inputDate.getSeconds()).padStart(2, '0');
+
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`;
+  }
+
+  
+
+  deleteIncome(incomeId: number): void {
+    const incomedataFetch = this.incomeSources.find(i => i.id === incomeId);
+    const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent, {
+      width: '400px',
+      panelClass: 'custom-dialog-container',
+      data: {...incomedataFetch, isIncome:true},
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        const incomeSource = this.incomeSources.find(i => i.id === incomeId);
+        incomeSource.date = this.formatDate(incomeSource.date);
+
+        this.httpClient.post<IncomeSource[]>(`${this.baseUrl}/api/v1/transaction/income/incomeDeleteCheck`, incomeSource).subscribe({
+          next: (result) => {
+            if (result) {
+            
+              const index = this.incomeSources.findIndex(i=>i.id === incomeId);
+              if (index !== -1) {
+                this.incomeSources.splice(index, 1); // Remove the item at the found index
+              }
+              this.updateChartData();
+              this.httpClient.delete<void>(`${this.baseUrl}/api/v1/transaction/income/${incomeId}`)
+                .subscribe({
+                  next: () => {
+                    this.toastr.warning("Income " +incomeSource?.source+ " has been deleted");
+                  },
+                  error: (err) => {
+                    console.error('Error deleting income:', err);
+                  }
+                });
+              
+            } else {
+              this.toastr.warning("Income can't be deleted");
+            }
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Failed to delete income:', error);
+          }
+        });
+
+      }
+    });
+  }
+
+
+  private updateChartData() {
+    // Group income sources by category and sum their amounts
+    const categoryMap = new Map<string, number>();
+    
+    this.incomeSources.forEach(income => {
+      const currentAmount = categoryMap.get(income.category) || 0;
+      categoryMap.set(income.category, currentAmount + income.amount);
+    });
+
+    // Update chart data
+    this.pieChartData = {
+      labels: Array.from(categoryMap.keys()),
+      datasets: [{
+        data: Array.from(categoryMap.values()),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40'
+        ]
+      }]
+    };
+
+    // Calculate recurring vs one-time ratio
+    const recurringTotal = this.incomeSources
+      .filter(income => income.recurring)
+      .reduce((sum, income) => sum + income.amount, 0);
+    
+    this.recurringPercentage = this.totalIncome > 0 
+      ? Math.round((recurringTotal / this.totalIncome) * 100)
+      : 0;
+  }
+
+
+  filterIncome() {
+    this.loadIncomeData();
+  }
+
+  resetFilters() {
+    const today = new Date();
+    this.selectedYear = today.getFullYear(); // Reset to the current year
+    this.selectedMonth = today.getMonth() + 1; // Reset to the current month (1-based index)
+    this.selectedCategory = ''; // Reset to all categories
+    this.filterIncome();
+  }
+
+
+  generateReport() {
+    this.isLoading = true;
+
+    const payload = {
+      category: this.selectedCategory === '' ? 'ALL' : this.selectedCategory,
+      deleteStatus: false,
+      date: this.getSelectedDate(),
+      offset: 0,
+      limit: this.totalCount,
+      sortBy: "",
+      sortOrder: "",
+      requestType: this.selectedMonth === 0 ? 'YEARLY' : 'MONTHLY'
+    };
+
+    this.httpClient.post(`${this.baseUrl}/api/v1/transaction/income/get-incomes/excel-report`, payload, { responseType: 'blob' }).subscribe({
+      next: (response) => {
+        // Trigger File Download
+        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Monthly_Report_04_2025.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Failed to generate report:', error);
+        console.log(error.status)
+        console.log(error.error?.message);
+      }
+    });
+  }
+  
+}

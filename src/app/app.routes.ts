@@ -1,0 +1,100 @@
+import { Routes } from '@angular/router';
+import { HomeComponent } from './home/home.component';
+import { LoginComponent } from './login/login.component';
+import { SignupComponent } from './signup/signup.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { AuthGuard } from './auth.guard';
+import { IncomeComponent } from './income/income.component';
+import { ExpensesComponent } from './expenses/expenses.component';
+import { BudgetsComponent } from './budgets/budgets.component';
+import { GoalsComponent } from './goals/goals.component';
+import { ProfileComponent } from './profile/profile.component';
+import { OverviewComponent } from './overview/overview.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { AnalysisComponent } from './analysis/analysis.component';
+import { AiAssistantComponent } from './ai-assistant/ai-assistant.component';
+import { SignupOtpConfirmDialogComponent } from './signup-otp-confirm-dialog/signup-otp-confirm-dialog.component';
+import { ForgotUsernameComponent } from './forgot-username/forgot-username.component';
+import { ReportsInsightsComponent } from './reports-insights/reports-insights.component';
+import { RaiseRequestComponent } from './raise-request/raise-request.component';
+import { RequestTrackerComponent } from './request-tracker/request-tracker.component';
+import { AdminHomeComponent } from './admin/admin-home/admin-home.component';
+import { AdminUsersComponent } from './admin/admin-users/admin-users.component';
+import { SupportUserLoginComponent } from './support-user-login/support-user-login.component';
+import { AdminRequestsComponent } from './admin/admin-requests/admin-requests.component';
+import { AdminInsightsComponent } from './admin/admin-insights/admin-insights.component';
+import { AdminUserDefectsComponent } from './admin/admin-user-defects/admin-user-defects.component';
+import { UserConfigurationComponent } from './user-configuration/user-configuration.component';
+import { AdminUserFeedbackComponent } from './admin/admin-user-feedback/admin-user-feedback.component';
+import { AdminConfigurationComponent } from './admin/admin-configuration/admin-configuration.component';
+import { UserNotificationsComponent } from './user-notifications/user-notifications.component';
+import { AdminReasonsComponent } from './admin/admin-reasons/admin-reasons.component';
+import { HelpCenterComponent } from './help-center/help-center.component';
+import { AdminCategoriesListComponent } from './admin/admin-categories-list/admin-categories-list.component';
+import { GmailSyncSummaryComponent } from './gmail-sync-summary/gmail-sync-summary.component';
+import { MaintainerHomeComponent } from './maintainer-home/maintainer-home.component';
+import { AdminExcelTemplatesComponent } from './admin/admin-excel-templates/admin-excel-templates.component';
+import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.component';
+import { AdminTriggersComponent } from './admin/admin-triggers/admin-triggers.component';
+import { AdminUserSessionTimeComponent } from './admin/admin-user-session-time/admin-user-session-time.component';
+import { AdminFailedQueuesComponent } from './admin/admin-failed-queues/admin-failed-queues.component';
+import { CustomerCareLayoutComponent } from './customer-care/customer-care-layout/customer-care-layout.component';
+import { CustomerCareConversationsComponent } from './customer-care/customer-care-conversations/customer-care-conversations.component';
+import { CustomerCareHomeComponent } from './customer-care/customer-care-home/customer-care-home.component';
+
+export const routes: Routes = [
+  { path: '', component: HomeComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'support-user/login', component: SupportUserLoginComponent },
+  { path: 'signup', component: SignupComponent },
+  { path: 'forgot-password',component:ForgotPasswordComponent },
+  { path: 'forgot-username', component:ForgotUsernameComponent },
+  { path: 'raise-request', component:RaiseRequestComponent },
+  { path: 'otp-confirm', component: SignupOtpConfirmDialogComponent },
+  { path: 'track-request', component: RequestTrackerComponent },
+  { path: 'help-center', component: HelpCenterComponent },
+  { path: 'maintainer/home', component: MaintainerHomeComponent },
+  {
+    path: 'customer-care',
+    component: CustomerCareLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'home', component: CustomerCareHomeComponent },
+      { path: 'conversations', component: CustomerCareConversationsComponent },
+    ]
+  },
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    children: [
+      { path: 'home', component: AdminHomeComponent },
+      { path: 'users/:status', component: AdminUsersComponent },
+      { path: 'requests/:status', component: AdminRequestsComponent },
+      { path: 'insights', component: AdminInsightsComponent },
+      { path: 'user-defects', component: AdminUserDefectsComponent },
+      { path: 'feedbacks', component: AdminUserFeedbackComponent },
+      { path: 'configuration', component: AdminConfigurationComponent },
+      { path: 'configuration/reasons', component: AdminReasonsComponent },
+      { path: 'configuration/categories', component: AdminCategoriesListComponent },
+      { path: 'configuration/manage-templates', component: AdminExcelTemplatesComponent },
+      { path: 'configuration/manage-triggers', component: AdminTriggersComponent },
+      { path: 'configuration/user-session', component: AdminUserSessionTimeComponent },
+      { path: 'configuration/failed-queues', component: AdminFailedQueuesComponent },
+    ]
+  },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard],children:[
+    {path:'',component:OverviewComponent},
+    {path:'overview',component:OverviewComponent},
+    {path:'income',component:IncomeComponent},
+    {path:'expenses',component:ExpensesComponent},
+    {path:'budgets',component:BudgetsComponent},
+    {path:'goals',component:GoalsComponent},
+    {path:'analysis',component:AnalysisComponent},
+    {path:'profile',component:ProfileComponent},
+    {path: 'user-configuration', component:UserConfigurationComponent},
+    {path: 'ai-assistant', component: AiAssistantComponent},
+    {path: 'reports-insights', component:ReportsInsightsComponent},
+    {path: 'notifications', component:UserNotificationsComponent},
+    {path: 'gmail-sync-summary', component:GmailSyncSummaryComponent},
+  ]},
+];

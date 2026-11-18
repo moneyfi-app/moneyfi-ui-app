@@ -1,0 +1,56 @@
+<div class="dialog-container">
+  <h2 class="dialog-title">{{ dialogTitle }}</h2>
+
+  <form class="income-form" novalidate>
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Amount</mat-label>
+      <span matPrefix class="currency-prefix">₹</span>
+      <input matInput type="number" [(ngModel)]="expenseSource.amount" name="amount" required placeholder="0.00">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Date</mat-label>
+      <input matInput [matDatepicker]="picker" [(ngModel)]="expenseSource.date" name="date" [max]="today" required>
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="!expenseSource.date">Date is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+  <mat-label>Category</mat-label>
+
+    <mat-select
+      [(ngModel)]="expenseSource.categoryId"
+      name="categoryId"
+      required
+    >
+      <mat-option *ngFor="let cat of categories" [value]="cat.categoryId">
+        {{ cat.category }}
+      </mat-option>
+    </mat-select>
+
+    <mat-icon matPrefix>category</mat-icon>
+
+    <mat-error *ngIf="expenseSource.categoryId === null">
+      Category is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Description</mat-label>
+      <input matInput [(ngModel)]="expenseSource.description" (ngModelChange)="capitalizeFirstLetter()" name="description" required>
+      <mat-error *ngIf="expenseSource.description.trim() === ''">Description is required</mat-error>
+    </mat-form-field>
+
+    <div class="recurring-checkbox">
+      <mat-checkbox [(ngModel)]="expenseSource.recurring" name="recurring" color="primary">
+        Recurring Expense
+      </mat-checkbox>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-stroked-button (click)="onCancel()">Cancel</button>
+      <button mat-raised-button color="primary" [disabled]="!isValid()" (click)="onSave()">Save Expense</button>
+    </div>
+  </form>
+</div>

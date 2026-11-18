@@ -1,0 +1,22 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+/* Position to top-right */
+.toast-top-right {
+    top: 10px !important;
+    right: 10px !important;
+}
+  
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Blur background ONLY for Gmail Sync dialog */
+.gmail-sync-backdrop {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+

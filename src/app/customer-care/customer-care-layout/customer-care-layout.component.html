@@ -1,0 +1,22 @@
+<div class="cc-container">
+  <app-role-header title="MoneyFi Customer Care" theme="customer-care"></app-role-header>
+
+  <div class="layout">
+    <aside class="side-nav" [class.collapsed]="!isSidebarOpen">
+      <ul class="nav-list">
+        <li *ngFor="let item of navItems" [routerLink]="item.link">{{ item.label }}</li>
+      </ul>
+    </aside>
+
+    <!-- IMPORTANT -->
+    <button class="sidebar-toggle" [class.open]="isSidebarOpen" (click)="toggleSidebar()"
+      [attr.aria-expanded]="isSidebarOpen" [attr.aria-label]="isSidebarOpen ? 'Close sidebar' : 'Open sidebar'">
+      {{ isSidebarOpen ? '‹' : '›' }}
+    </button>
+
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

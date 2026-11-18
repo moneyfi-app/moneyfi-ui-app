@@ -1,0 +1,24 @@
+<nav class="top-nav" [class.customer-care]="theme === 'customer-care'">
+  <div class="header-container">
+    <div class="brand">{{ title }}</div>
+
+    <div class="user-section">
+      <span class="user-info">
+        <i class="user-icon">👤</i>
+        {{ username }}
+      </span>
+
+      <button class="change-password-btn" type="button" (click)="changePassword()">
+        Change Password
+      </button>
+
+      <button class="logout-btn" (click)="logoutUser()" [disabled]="isLogoutLoading">
+        <span *ngIf="!isLogoutLoading">Logout</span>
+        <span *ngIf="isLogoutLoading" class="logout-spinner-container">
+          <span class="spinner-small"></span>
+          Logging out...
+        </span>
+      </button>
+    </div>
+  </div>
+</nav>

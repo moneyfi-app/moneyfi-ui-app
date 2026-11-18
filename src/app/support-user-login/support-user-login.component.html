@@ -1,0 +1,131 @@
+<nav class="navbar">
+  <span class="brand-name">
+    <i class="fas fa-chart-pie"></i>
+    MoneyFi Support User
+  </span>
+</nav>
+
+<div class="loading-spinner" *ngIf="isLoading">
+  <div class="spinner"></div>
+</div>
+
+<div class="login-container">
+  <div class="login-content">
+    <div class="info-card">
+      <h3>MoneyFi Control Center</h3>
+      <p class="info-subtitle">Manage and monitor the platform</p>
+
+      <div class="feature-list">
+        <div class="feature-item" *ngFor="let feature of features">
+          <i class="fas" [ngClass]="feature.icon"></i>
+          <div>
+            <h4>{{ feature.title }}</h4>
+            <p>{{ feature.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="card-brand-name" (click)="navigateTo('')" role="button" tabindex="0">
+        <i class="fas fa-chart-pie"></i>
+        MoneyFi
+      </div>
+      <h2>Welcome Support User</h2>
+      <p class="subtitle">Please login to your account</p>
+
+      <form [formGroup]="loginForm" (submit)="onSubmit(loginForm.value)">
+        <div class="form-group role-selector">
+          <label>Select Role</label>
+          <div class="role-options">
+            <label *ngFor="let role of roles">
+              <input type="radio" formControlName="role" [value]="role.value" />
+              {{ role.label }}
+            </label>
+          </div>
+          <div class="error-message" *ngIf="hasError('role', 'required')">
+            Please select a role
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            formControlName="username"
+            placeholder="Enter your username"
+          />
+          <div class="error-message" *ngIf="hasError('username', 'required')">
+            Username is required
+          </div>
+          <div class="error-message" *ngIf="hasError('username', 'email')">
+            Please enter valid email
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-input">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              placeholder="Enter your password"
+            />
+            <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+              <i class="fas fa-eye{{ showPassword ? '' : '-slash' }}"></i>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="hasError('password', 'required')">
+            Password is required
+          </div>
+          <div class="error-message" *ngIf="hasError('password', 'minlength')">
+            Password must be at least 6 characters
+          </div>
+        </div>
+
+        <div class="form-options">
+          <a class="forgot-password" routerLink="/forgot-username">Forgot Username?</a>
+          <a class="forgot-password" routerLink="/forgot-password">Forgot Password?</a>
+        </div>
+
+        <button type="submit" [disabled]="!loginForm.valid" class="submit-btn">
+          Login
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="tfa-backdrop" *ngIf="showTwoFactorModal">
+  <div class="tfa-modal">
+    <h3>Two-Factor Verification</h3>
+    <p class="subtitle">Enter the OTP sent to you <strong>or</strong> your dynamic password.</p>
+
+    <div class="form-group">
+      <label for="tfa-otp">OTP</label>
+      <input id="tfa-otp" type="text" [(ngModel)]="otp" [disabled]="!!dynamicPassword"
+        placeholder="Enter OTP" autocomplete="one-time-code" />
+    </div>
+
+    <button type="button" class="tfa-resend" (click)="requestOtp(true)"
+      [disabled]="isOtpSending || !!dynamicPassword">
+      {{ isOtpSending ? 'Sending...' : 'Resend OTP' }}
+    </button>
+
+    <div class="tfa-divider">OR</div>
+
+    <div class="form-group">
+      <label for="tfa-dynamic">Dynamic Password</label>
+      <input id="tfa-dynamic" type="password" [(ngModel)]="dynamicPassword" [disabled]="!!otp"
+        placeholder="Enter dynamic password" autocomplete="off" />
+    </div>
+
+    <div class="tfa-actions">
+      <button type="button" class="tfa-cancel" (click)="closeTwoFactorModal()">Cancel</button>
+      <button type="button" class="submit-btn" (click)="submitTwoFactor()"
+        [disabled]="!otp.trim() && !dynamicPassword.trim()">Verify</button>
+    </div>
+  </div>
+</div>

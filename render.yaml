@@ -1,0 +1,11 @@
+services:
+  - type: static
+    name: moneyfi-app
+    repo: https://github.com/moneyfi-app/moneyfi-ui-app
+    branch: main
+    buildCommand: npx ng build --configuration=production
+    publishPath: dist/moneyfi-app/browser
+    redirects:
+      - source: /*
+        destination: /index.html
+        status: 200

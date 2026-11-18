@@ -1,0 +1,182 @@
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { HttpClient } from '@angular/common/http';
+import { ToastrService } from 'ngx-toastr';
+import { ParsedTransaction } from '../model/ParsedTransaction';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { environment } from '../../environments/environment';
+import { CategoryService } from '../services/category.service';
+import { Category } from '../model/category-list';
+
+@Component({
+  selector: 'app-gmail-sync-dialog',
+  standalone: true,
+  imports: [CommonModule,
+    FormsModule,
+    MatDialogModule,
+    MatProgressSpinnerModule,
+    MatButtonModule],
+  templateUrl: './gmail-sync-dialog.component.html',
+  styleUrl: './gmail-sync-dialog.component.css'
+})
+export class GmailSyncDialogComponent implements OnInit {
+
+  loading = true;
+  transactions: ParsedTransaction[] = [];
+  remainingCount = 0;
+  categories: Category[] = [];
+
+
+  BASE_URL = environment.BASE_URL;
+
+  transactionTypes = ['CREDIT', 'DEBIT'];
+
+  constructor(
+    @Inject(MAT_DIALOG_DATA) private data: { code: string, syncDate: string },
+    private http: HttpClient,
+    private dialogRef: MatDialogRef<GmailSyncDialogComponent>,
+    private toastr: ToastrService,
+    private categoryService: CategoryService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadCategories();
+    this.startSync();
+  }
+
+  loadCategories() {
+    this.categoryService.getIncomeAndExpenseCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.mapCategoryNames();
+      },
+      error: () => {
+        this.toastr.error('Failed to load categories');
+      }
+    });
+  }
+
+  mapCategoryNames() {
+    if (!this.categories.length || !this.transactions.length) {
+      return;
+    }
+    this.transactions.forEach(tx => {
+      const matched = this.categories.find(
+        c => c.categoryId === tx.categoryId
+      );
+      tx.categoryName = matched?.category ?? 'Unknown';
+    });
+  }
+
+
+  startSync() {
+  this.loading = true;
+
+  // const today = new Date().toISOString().split('T')[0]; 
+  const syncDate = this.data.syncDate || new Date().toISOString().split('T')[0];
+  this.http
+    .post<Record<number, ParsedTransaction[]>>(
+      `${this.BASE_URL}/api/v1/user-service/gmail-sync/start?date=${syncDate}`,
+      {}
+    )
+    .subscribe({
+      next: (res) => {
+        // Extract count (map key)
+        const [countKey] = Object.keys(res);
+        this.remainingCount = Number(countKey);
+
+        // Extract transaction list
+        const txList = res[this.remainingCount] ?? [];
+
+        this.transactions = txList.map(tx => ({
+          ...tx,
+          accepted: true,
+        }));
+
+        this.mapCategoryNames();
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        try {
+          const errorObj =
+            typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+          this.toastr.error(errorObj.message);
+        } catch {
+          console.error('Failed to parse error:', err.error);
+        }
+      },
+    });
+}
+
+
+  ignore(index: number) {
+    this.transactions.splice(index, 1);
+  }
+
+  cancel() {
+    this.dialogRef.close();
+  }
+
+  
+  submitting = false;
+
+  submit() {
+    const accepted = this.transactions.filter(t => t.accepted);
+    const syncDate = this.data.syncDate || new Date().toISOString().split('T')[0];
+
+    this.submitting = true;
+
+    this.http
+      .post(`${this.BASE_URL}/api/v1/transaction/gmail-sync/bulk-save/${syncDate}`, accepted)
+      .subscribe({
+        next: () => {
+          this.toastr.success('Transactions added successfully');
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          this.submitting = false;
+
+          let errors: any;
+
+          try {
+            errors = typeof err.error === 'string'
+              ? JSON.parse(err.error)
+              : err.error;
+          } catch {
+            errors = err.error;
+          }
+
+          // Backend validation errors (array format)
+          if (Array.isArray(errors)) {
+            this.applyValidationErrors(errors);
+            return;
+          }
+
+          // Other backend errors (object format)
+          if (errors?.message) {
+            this.toastr.error(errors.message);
+            return;
+          }
+
+          // Fallback
+          this.toastr.error('Something went wrong. Please try again.');
+        }
+      });
+  }
+
+  applyValidationErrors(errors: any[]) {
+    this.transactions.forEach(t => t.validationErrors = undefined);
+
+    errors.forEach(err => {
+      const tx = this.transactions.find(
+        t => t.gmailProcessedId === err.gmailProcessedId
+      );
+      if (!tx) return;
+      tx.validationErrors = err.errorColumns[0];
+    });
+  }
+}
