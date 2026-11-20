@@ -41,6 +41,7 @@ export class SupportUserLoginComponent {
   showTwoFactorModal = false;
   isOtpSending = false;
   otp = '';
+  salt = '';
   dynamicPassword = '';
   pendingCredentials: LoginCredentials | null = null;
 
@@ -92,6 +93,7 @@ export class SupportUserLoginComponent {
           if (res?.data === true) {
             this.pendingCredentials = loginCredentials;
             this.otp = '';
+            this.salt = res.other;
             this.dynamicPassword = '';
             this.showTwoFactorModal = true;
             this.requestOtp(false);
@@ -129,7 +131,7 @@ export class SupportUserLoginComponent {
     });
   }
 
-  submitTwoFactor() {
+  async submitTwoFactor() {
     const otp = this.otp.trim();
     const dynamicPassword = this.dynamicPassword.trim();
     if (!this.pendingCredentials || (!otp && !dynamicPassword)) {
@@ -138,27 +140,53 @@ export class SupportUserLoginComponent {
     }
 
     this.isLoading = true;
-    this.authApiService
-      .twoFactorVerification(this.pendingCredentials, otp || undefined, dynamicPassword || undefined)
-      .subscribe({
-        next: (res) => {
-          if (!res?.data || typeof res.data !== 'object') {
-            this.isLoading = false;
-            this.toastr.error(res?.message, 'Verification Failed');
-            return;
-          }
-          this.closeTwoFactorModal();
-          this.handleLoginSuccess(res.data);
-        },
-        error: (err) => this.handleError(err),
-      });
+    try {
+      const passwordToVerify = dynamicPassword
+        ? await this.hashDynamicPassword(dynamicPassword)
+        : undefined;
+
+      this.authApiService
+        .twoFactorVerification(this.pendingCredentials, otp || undefined, passwordToVerify)
+        .subscribe({
+          next: (res) => {
+            if (!res?.data || typeof res.data !== 'object') {
+              this.isLoading = false;
+              this.toastr.error(res?.message, 'Verification Failed');
+              return;
+            }
+            this.closeTwoFactorModal();
+            this.handleLoginSuccess(res.data);
+          },
+          error: (err) => this.handleError(err),
+        });
+    } catch (error) {
+      this.isLoading = false;
+      console.error('Failed to hash dynamic password:', error);
+      this.toastr.error('Unable to verify dynamic password', 'Verification Failed');
+    }
   }
 
   closeTwoFactorModal() {
     this.showTwoFactorModal = false;
     this.pendingCredentials = null;
     this.otp = '';
+    this.salt = '';
     this.dynamicPassword = '';
+  }
+
+  private async hashDynamicPassword(dynamicPassword: string): Promise<string> {
+    if (!this.salt) {
+      throw new Error('Missing dynamic password salt');
+    }
+
+    const hashBuffer = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(dynamicPassword + this.salt),
+    );
+
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
   }
 
   private handleLoginSuccess(response: { [key: string]: string }) {

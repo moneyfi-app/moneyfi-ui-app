@@ -23,8 +23,8 @@ export class AuthApiService {
     // console.log(token);
   }
 
-  verifyCredentialsForTwoFactor(credentials: LoginCredentials): Observable<{ data: boolean; message: string }> {
-    return this.authClient.post<{ data: boolean; message: string }>(
+  verifyCredentialsForTwoFactor(credentials: LoginCredentials): Observable<{ data: boolean; other: string; message: string }> {
+    return this.authClient.post<{ data: boolean; other: string; message: string }>(
       `${this.baseUrl}/api/v1/user-service/auth/two-factor-auth/verify-password`, credentials);
   }
 
