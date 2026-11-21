@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface AiPrompt {
   promptId: number;
@@ -28,7 +30,7 @@ interface PaginatedAiPromptResponse {
   templateUrl: './admin-ai-prompts.component.html',
   styleUrl: './admin-ai-prompts.component.css',
 })
-export class AdminAiPromptsComponent implements OnInit {
+export class AdminAiPromptsComponent implements OnInit, OnDestroy {
   readonly baseUrl = environment.BASE_URL;
 
   prompts: AiPrompt[] = [];
@@ -38,8 +40,8 @@ export class AdminAiPromptsComponent implements OnInit {
   operationType: 'create' | 'update' = 'create';
 
   search = '';
-  searchBy = 'prompt';
-  sortBy = 'promptId';
+  searchBy = 'promptType';
+  sortBy = 'updatedAt';
   sortOrder = 'DESC';
   offset = 0;
   limit = 10;
@@ -51,9 +53,15 @@ export class AdminAiPromptsComponent implements OnInit {
 
   readonly limitOptions = [10, 25, 50];
   readonly searchOptions = [
-    { value: 'prompt', label: 'Prompt' },
+    // { value: 'prompt', label: 'Prompt' },
     { value: 'promptType', label: 'Prompt type' },
+    // { value: 'createdBy', label: 'Created by' },
+    // { value: 'updatedBy', label: 'Updated by' },
+    // { value: 'createdAt', label: 'Created at' },
+    // { value: 'updatedAt', label: 'Updated at' },
   ];
+  private readonly searchInput = new Subject<string>();
+  private searchSubscription?: Subscription;
 
   constructor(
     private httpClient: HttpClient,
@@ -61,7 +69,17 @@ export class AdminAiPromptsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.searchSubscription = this.searchInput
+      .pipe(debounceTime(350), distinctUntilChanged())
+      .subscribe(() => {
+        this.offset = 0;
+        this.loadPrompts();
+      });
     this.loadPrompts();
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
   }
 
   loadPrompts(): void {
@@ -69,13 +87,13 @@ export class AdminAiPromptsComponent implements OnInit {
     let params = new HttpParams()
       .set('offset', this.offset)
       .set('limit', this.limit)
-      // .set('sortBy', this.sortBy)
+      .set('sortBy', this.sortBy)
       .set('sortOrder', this.sortOrder);
 
     if (this.search.trim()) {
       params = params
         .set('search', this.search.trim())
-        // .set('searchBy', this.searchBy);
+        .set('searchBy', this.searchBy);
     }
 
     this.httpClient
@@ -89,11 +107,18 @@ export class AdminAiPromptsComponent implements OnInit {
           this.totalCount = response?.totalCount ?? 0;
           this.isLoading = false;
         },
-        error: () => {
+        error: (err) => {
           this.prompts = [];
           this.totalCount = 0;
           this.isLoading = false;
-          this.toastr.error('Failed to load AI prompts');
+          try {
+              const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+              const message = errorObj?.message || errorObj?.error || 'Something went wrong';
+              this.toastr.error(message);
+            } catch (e) {
+              console.error('Failed to parse error:', err.error);
+              this.toastr.error('Failed to load AI prompts');
+            }
         },
       });
   }
@@ -101,6 +126,17 @@ export class AdminAiPromptsComponent implements OnInit {
   onSearch(): void {
     this.offset = 0;
     this.loadPrompts();
+  }
+
+  onSearchInputChange(): void {
+    this.searchInput.next(this.search);
+  }
+
+  onSearchByChange(): void {
+    this.offset = 0;
+    if (this.search.trim()) {
+      this.loadPrompts();
+    }
   }
 
   clearSearch(): void {

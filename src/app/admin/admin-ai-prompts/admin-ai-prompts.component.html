@@ -11,7 +11,7 @@
 
   <div class="toolbar">
     <div class="search-group">
-      <select [(ngModel)]="searchBy" aria-label="Search by">
+      <select [(ngModel)]="searchBy" (ngModelChange)="onSearchByChange()" aria-label="Search by">
         <option *ngFor="let option of searchOptions" [value]="option.value">
           {{ option.label }}
         </option>
@@ -20,6 +20,7 @@
         type="search"
         [(ngModel)]="search"
         placeholder="Search prompts"
+        (ngModelChange)="onSearchInputChange()"
         (keyup.enter)="onSearch()"
       />
       <button class="secondary-btn" type="button" (click)="onSearch()">Search</button>
@@ -41,28 +42,46 @@
       <thead>
         <tr>
           <th>
-            <button type="button" class="sort-button" (click)="changeSort('promptId')">
-              ID
-              <span>{{ sortBy === 'promptId' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
-            </button>
-          </th>
-          <th>
             <button type="button" class="sort-button" (click)="changeSort('promptType')">
               Prompt Type
               <span>{{ sortBy === 'promptType' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
             </button>
           </th>
-          <th>Prompt</th>
-          <th>Created By</th>
-          <th>Created At</th>
-          <th>Updated By</th>
-          <th>Updated At</th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('prompt')">
+              Prompt
+              <span>{{ sortBy === 'prompt' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('createdBy')">
+              Created By
+              <span>{{ sortBy === 'createdBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('createdAt')">
+              Created At
+              <span>{{ sortBy === 'createdAt' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('updatedBy')">
+              Updated By
+              <span>{{ sortBy === 'updatedBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('updatedAt')">
+              Updated At
+              <span>{{ sortBy === 'updatedAt' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let prompt of prompts">
-          <td>{{ prompt.promptId }}</td>
           <td><span class="type-badge">{{ prompt.promptType }}</span></td>
           <td class="prompt-cell" [title]="prompt.prompt">{{ prompt.prompt }}</td>
           <td>{{ prompt.createdBy }}</td>
@@ -76,7 +95,7 @@
           </td>
         </tr>
         <tr *ngIf="!isLoading && prompts.length === 0">
-          <td colspan="8" class="empty-state">No AI prompts found</td>
+          <td colspan="7" class="empty-state">No AI prompts found</td>
         </tr>
       </tbody>
     </table>
