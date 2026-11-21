@@ -387,7 +387,7 @@ export class UserConfigurationComponent implements OnInit, AfterViewInit{
         try {
             const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
             const message = errorObj?.message || errorObj?.error || 'Something went wrong';
-            this.toastr.error(message, 'Login Failed');
+            this.toastr.error(message);
           } catch (e) {
             console.error('Failed to parse error:', err.error);
             this.toastr.error('Failed to block account. Please try again later.', 'Error');
@@ -440,7 +440,7 @@ export class UserConfigurationComponent implements OnInit, AfterViewInit{
         try {
             const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
             const message = errorObj?.message || errorObj?.error || 'Something went wrong';
-            this.toastr.error(message, 'Login Failed');
+            this.toastr.error(message);
           } catch (e) {
             console.error('Failed to parse error:', err.error);
             this.toastr.error('Failed to delete account. Please try again later.', 'Error');

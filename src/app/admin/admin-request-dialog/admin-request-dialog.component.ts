@@ -84,7 +84,7 @@ export class AdminRequestDialogComponent {
           try {
               const errorObj = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
               const message = errorObj?.message || errorObj?.error || 'Something went wrong';
-              this.toastr.error(message, 'Login Failed');
+              this.toastr.error(message);
             } catch (e) {
               console.error('Failed to parse error:', err.error);
             }
