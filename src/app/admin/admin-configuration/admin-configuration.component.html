@@ -84,6 +84,15 @@
       View
     </button>
   </div>
+
+  <!-- Config Card 10 -->
+  <div class="config-card">
+    <h3>Admin server configurations</h3>
+    <p>View and update server user configurations</p>
+    <button class="config-btn primary" [routerLink]="'/admin/configuration/server-configurations'">
+      Manage
+    </button>
+  </div>
 </div>
 
 <div class="expired-section" *ngIf="showExpiredNotifications">

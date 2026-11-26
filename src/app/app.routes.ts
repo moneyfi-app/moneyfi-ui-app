@@ -42,6 +42,7 @@ import { CustomerCareLayoutComponent } from './customer-care/customer-care-layou
 import { CustomerCareConversationsComponent } from './customer-care/customer-care-conversations/customer-care-conversations.component';
 import { CustomerCareHomeComponent } from './customer-care/customer-care-home/customer-care-home.component';
 import { AdminAiPromptsComponent } from './admin/admin-ai-prompts/admin-ai-prompts.component';
+import { AdminServerConfigurationsComponent } from './admin/admin-server-configurations/admin-server-configurations.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -82,6 +83,7 @@ export const routes: Routes = [
       { path: 'configuration/user-session', component: AdminUserSessionTimeComponent },
       { path: 'configuration/failed-queues', component: AdminFailedQueuesComponent },
       { path: 'configuration/ai-prompts', component: AdminAiPromptsComponent },
+      { path: 'configuration/server-configurations', component: AdminServerConfigurationsComponent },
     ]
   },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard],children:[

@@ -1,0 +1,152 @@
+<div class="server-configurations-page">
+  <div class="header-row">
+    <div>
+      <h2>Admin server configurations</h2>
+      <p>View and manage configuration values applied to users.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-group">
+      <select
+        [(ngModel)]="searchBy"
+        (ngModelChange)="onSearchByChange()"
+        aria-label="Search by"
+      >
+        <option *ngFor="let option of searchOptions" [ngValue]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+      <input
+        type="search"
+        [(ngModel)]="search"
+        placeholder="Search"
+        aria-label="Search"
+        (ngModelChange)="onSearchInputChange()"
+        (keyup.enter)="onSearch()"
+      />
+      <button class="secondary-btn" type="button" (click)="onSearch()">Search</button>
+      <button class="clear-btn" type="button" (click)="clearSearch()" [disabled]="!search">
+        Clear
+      </button>
+    </div>
+
+    <label class="limit-control">
+      Rows
+      <select [(ngModel)]="limit" (change)="changeLimit()">
+        <option *ngFor="let option of limitOptions" [ngValue]="option">{{ option }}</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('operationType')">
+              Configuration
+              <span>{{ sortBy === 'operationType' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>Value</th>
+          <th>Unit</th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('createdBy')">
+              Created By
+              <span>{{ sortBy === 'createdBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('updatedBy')">
+              Updated By
+              <span>{{ sortBy === 'updatedBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>
+            <button type="button" class="sort-button" (click)="changeSort('lastUpdatedAt')">
+              Last Updated
+              <span>{{ sortBy === 'lastUpdatedAt' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
+            </button>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let configuration of configurations">
+          <td><span class="type-badge">{{ configuration.operationType }}</span></td>
+          <td class="value-cell" [title]="configuration.operationValue ?? ''">
+            {{ configuration.operationValue ?? 'Not set' }}
+          </td>
+          <td>{{ configuration.valueMeasuredQuantity }}</td>
+          <td>{{ configuration.createdBy }}</td>
+          <td>{{ configuration.updatedBy }}</td>
+          <td>{{ configuration.lastUpdatedAt ? (configuration.lastUpdatedAt | date:'short') : '—' }}</td>
+          <td>
+            <button class="update-btn" type="button" (click)="openUpdateModal(configuration)">
+              Edit
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!isLoading && configurations.length === 0">
+          <td colspan="7" class="empty-state">No server configurations found</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="isLoading" class="grid-loader">
+      <span class="spinner"></span>
+      Loading server configurations...
+    </div>
+  </div>
+
+  <div class="pagination" *ngIf="totalCount > 0">
+    <span>Showing {{ offset + 1 }}-{{ offset + configurations.length }} of {{ totalCount }}</span>
+    <div>
+      <button type="button" (click)="previousPage()" [disabled]="offset === 0">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="offset + limit >= totalCount">Next</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="configuration-modal-title">
+    <div class="modal-header">
+      <h3 id="configuration-modal-title">
+        Edit configuration
+      </h3>
+      <button class="close-btn" type="button" (click)="closeModal()" [disabled]="isSaving" aria-label="Close">
+        ×
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="operation-type">Configuration type</label>
+        <div id="operation-type" class="read-only-value">{{ formOperationType }}</div>
+      </div>
+
+      <div class="form-group">
+        <label for="operation-value">Configuration value</label>
+        <textarea
+          id="operation-value"
+          [(ngModel)]="formOperationValue"
+          rows="5"
+          placeholder="Enter configuration value"
+          [disabled]="isSaving"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="cancel-btn" type="button" (click)="closeModal()" [disabled]="isSaving">
+        Cancel
+      </button>
+      <button class="save-btn" type="button" (click)="saveConfiguration()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner"></span>
+        {{ isSaving ? 'Saving...' : 'Save changes' }}
+      </button>
+    </div>
+  </div>
+</div>
