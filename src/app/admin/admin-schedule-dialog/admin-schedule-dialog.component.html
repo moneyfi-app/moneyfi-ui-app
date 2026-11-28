@@ -59,23 +59,13 @@
 
       <!-- Search (enabled only for Specific Users) -->
       <div class="form-group">
-        <input
-          type="text"
+        <app-admin-username-autocomplete
           placeholder="Search user..."
-          (input)="searchUsers($event)"
-          (focus)="onFocus()"
-          (blur)="onBlur()"
-          [disabled]="scheduleForm.value.recipients === 'All'" />
-      </div>
-
-      <!-- Suggestions dropdown -->
-      <div class="user-suggestions" *ngIf="searchResults.length > 0 && showSuggestions">
-        <div
-          class="suggestion"
-          *ngFor="let user of searchResults"
-          (mousedown)="addUser(user)">
-          {{ user }}
-        </div>
+          [clearOnSelect]="true"
+          [excludedUsernames]="selectedUsers"
+          [disabled]="scheduleForm.value.recipients === 'All'"
+          (usernameSelected)="addUser($event)"
+        />
       </div>
 
       <!-- Selected users (chips/badges) -->

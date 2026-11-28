@@ -1,0 +1,24 @@
+<div class="autocomplete">
+  <input
+    type="text"
+    [value]="value"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    aria-label="Search usernames"
+  />
+  <span *ngIf="isLoading" class="loading-spinner" role="status" aria-label="Loading usernames"></span>
+
+  <div class="suggestions" *ngIf="showSuggestions" (scroll)="onSuggestionsScroll($event)">
+    <button
+      type="button"
+      class="suggestion"
+      *ngFor="let username of suggestions"
+      (mousedown)="selectUsername($event, username)"
+    >
+      {{ username }}
+    </button>
+  </div>
+</div>

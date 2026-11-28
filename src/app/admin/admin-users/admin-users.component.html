@@ -149,6 +149,22 @@
       </div>
     </div>
 
+    <!-- Configurations -->
+    <div class="profile-section">
+      <h3>Configurations ({{ (userProfile?.configurationMap | keyvalue)?.length ?? 0 }})</h3>
+      <ng-container *ngIf="(userProfile?.configurationMap | keyvalue)?.length; else noConfigurations">
+        <div class="profile-grid">
+          <div *ngFor="let configuration of userProfile?.configurationMap | keyvalue">
+            <label>{{ configuration.key }}</label>
+            <span>{{ configuration.value }}</span>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noConfigurations>
+        <div class="no-data">No configurations available</div>
+      </ng-template>
+    </div>
+
     <!-- Name Change Requests -->
     <div class="profile-section">
       <h3>

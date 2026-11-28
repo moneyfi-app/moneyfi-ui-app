@@ -38,6 +38,7 @@ interface UserProfile {
   createdTime?: string;
   accountCreationSource?: string;
   address?: string;
+  configurationMap?: Record<string, string>;
   userRequestCount?: UserRequestCount;
   nameChangeRequests?: any[];
   unblockAccountRequests?: any[];

@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AdminUsernameAutocompleteComponent } from '../admin-username-autocomplete/admin-username-autocomplete.component';
 
 interface ServerConfiguration {
   configurationId?: number;
@@ -22,13 +23,12 @@ interface ServerConfigurationsResponse {
   totalCount: number;
 }
 
-type SortField = 'operationType' | 'createdBy' | 'updatedBy' | 'lastUpdatedAt';
 type SearchField = 'operationType' | 'createdBy' | 'updatedBy';
 
 @Component({
   selector: 'app-admin-server-configurations',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule],
+  imports: [CommonModule, DatePipe, FormsModule, AdminUsernameAutocompleteComponent],
   templateUrl: './admin-server-configurations.component.html',
   styleUrl: './admin-server-configurations.component.css',
 })
@@ -48,8 +48,6 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
 
   search = '';
   searchBy: SearchField = 'operationType';
-  sortBy: SortField = 'operationType';
-  sortOrder = 'ASC';
   offset = 0;
   limit = 10;
   totalCount = 0;
@@ -58,6 +56,9 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
   formConfigurationId: number | null = null;
   formOperationType = '';
   formOperationValue = '';
+  formTargetUsers: 'ALL' | 'SPECIFIC' = 'ALL';
+  formUsername = '';
+  private isUsernameSelected = false;
 
   private readonly searchInput = new Subject<string>();
   private searchSubscription?: Subscription;
@@ -128,17 +129,6 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
     this.applyLocalView();
   }
 
-  changeSort(field: SortField): void {
-    if (this.sortBy === field) {
-      this.sortOrder = this.sortOrder === 'ASC' ? 'DESC' : 'ASC';
-    } else {
-      this.sortBy = field;
-      this.sortOrder = 'ASC';
-    }
-    this.offset = 0;
-    this.applyLocalView();
-  }
-
   previousPage(): void {
     if (this.offset === 0) return;
     this.offset = Math.max(0, this.offset - this.limit);
@@ -163,6 +153,9 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
     this.formConfigurationId = configuration.configurationId ?? null;
     this.formOperationType = configuration.operationType;
     this.formOperationValue = configuration.operationValue ?? '';
+    this.formTargetUsers = 'ALL';
+    this.formUsername = '';
+    this.isUsernameSelected = false;
     this.showModal = true;
   }
 
@@ -171,21 +164,43 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
     this.showModal = false;
   }
 
+  onTargetUsersChange(): void {
+    this.formUsername = '';
+    this.isUsernameSelected = false;
+  }
+
+  onUsernameValueChange(username: string): void {
+    this.formUsername = username;
+    this.isUsernameSelected = false;
+  }
+
+  selectUsername(username: string): void {
+    this.formUsername = username;
+    this.isUsernameSelected = true;
+  }
+
   saveConfiguration(): void {
     const operationValue = this.formOperationValue.trim();
     if (!operationValue) {
       this.toastr.error('Configuration value is required');
       return;
     }
-    if (this.formConfigurationId === null) {
-      this.toastr.error('Configuration ID is missing; this configuration cannot be updated');
+    const username = this.formUsername.trim();
+    if (this.formTargetUsers === 'SPECIFIC' && (!username || !this.isUsernameSelected)) {
+      this.toastr.error('Select a username for the specific user configuration');
       return;
     }
 
     let params = new HttpParams()
       .set('operationType', this.formOperationType)
       .set('operationValue', operationValue)
-      .set('configurationId', this.formConfigurationId);
+      .set('targetUsers', this.formTargetUsers);
+    if (this.formConfigurationId !== null) {
+      params = params.set('configurationId', this.formConfigurationId);
+    }
+    if (this.formTargetUsers === 'SPECIFIC') {
+      params = params.set('username', username);
+    }
 
     this.isSaving = true;
     this.httpClient
@@ -215,16 +230,6 @@ export class AdminServerConfigurationsComponent implements OnInit, OnDestroy {
       return valuesToSearch.some((value) =>
         value?.toLocaleLowerCase().includes(searchTerm),
       );
-    });
-
-    filteredConfigurations.sort((left, right) => {
-      const leftValue = left[this.sortBy] ?? '';
-      const rightValue = right[this.sortBy] ?? '';
-      const comparison = String(leftValue).localeCompare(String(rightValue), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-      return this.sortOrder === 'ASC' ? comparison : -comparison;
     });
 
     this.totalCount = filteredConfigurations.length;

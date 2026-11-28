@@ -41,6 +41,8 @@ export class MaintainerHomeComponent implements OnInit {
 
   showAddModal = false;
   showUpdateModal = false;
+  isCreatingAdmin = false;
+  isUpdatingAdmin = false;
   selectedAdminId: number | null = null;
 
   addForm = {
@@ -121,17 +123,23 @@ export class MaintainerHomeComponent implements OnInit {
   }
 
   createAdmin() {
+    if (this.isCreatingAdmin) return;
     if (!this.addForm.username || !this.addForm.password) {
       alert('Username and Password are required');
       return;
     }
 
+    this.isCreatingAdmin = true;
     this.http.post(`${this.baseUrl}/api/v1/user-service/maintainer/support-user/add`, this.addForm).subscribe({
       next: () => {
+        this.isCreatingAdmin = false;
         this.closeAddModal();
         this.getAdmins();
       },
-      error: (err) => this.showError(err)
+      error: (err) => {
+        this.isCreatingAdmin = false;
+        this.showError(err);
+      }
     });
   }
 
@@ -148,18 +156,24 @@ export class MaintainerHomeComponent implements OnInit {
   }
 
   updateAdmin() {
+    if (this.isUpdatingAdmin) return;
     if (!this.updateForm.username || !this.updateForm.password) {
       alert('Username and Password are required');
       return;
     }
 
+    this.isUpdatingAdmin = true;
     this.http.post(`${this.baseUrl}/api/v1/user-service/maintainer/${this.selectedAdminId}/support-user/update`,
       this.updateForm).subscribe({
       next: () => {
+        this.isUpdatingAdmin = false;
         this.closeUpdateModal();
         this.getAdmins();
       },
-      error: (err) => this.showError(err)
+      error: (err) => {
+        this.isUpdatingAdmin = false;
+        this.showError(err);
+      }
     });
   }
 

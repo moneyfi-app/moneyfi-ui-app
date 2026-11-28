@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { AdminCommonServiceService } from '../admin-common-service.service';
 import { FormsModule } from '@angular/forms';
+import { AdminUsernameAutocompleteComponent } from '../admin-username-autocomplete/admin-username-autocomplete.component';
 
 @Component({
   selector: 'app-admin-triggers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminUsernameAutocompleteComponent],
   templateUrl: './admin-triggers.component.html',
   styleUrl: './admin-triggers.component.css',
 })
@@ -24,8 +24,6 @@ export class AdminTriggersComponent {
       recipientType: 'ALL',
       username: '',
       date: this.today,
-      suggestions: [] as string[],
-      showSuggestions: false,
     },
     {
       type: 'EXPENSE',
@@ -33,8 +31,6 @@ export class AdminTriggersComponent {
       recipientType: 'ALL',
       username: '',
       date: this.today,
-      suggestions: [] as string[],
-      showSuggestions: false,
     },
     {
       type: 'GOAL',
@@ -42,12 +38,8 @@ export class AdminTriggersComponent {
       recipientType: 'ALL',
       username: '',
       date: this.today,
-      suggestions: [] as string[],
-      showSuggestions: false,
     },
   ];
-
-  constructor(private adminCommonService: AdminCommonServiceService) {}
 
   baseUrl = environment.BASE_URL;
 
@@ -100,35 +92,4 @@ export class AdminTriggersComponent {
       });
   }
 
-  searchUsers(batch: any) {
-    const query = batch.username?.trim();
-
-    if (!query || query.length < 2) {
-      batch.suggestions = [];
-      batch.showSuggestions = false;
-      return;
-    }
-
-    this.adminCommonService.getUsernames(0, 10, query).subscribe((data) => {
-      batch.suggestions = data;
-      batch.showSuggestions = data.length > 0;
-    });
-  }
-
-  selectUser(batch: any, username: string) {
-    batch.username = username;
-    batch.showSuggestions = false;
-  }
-
-  onFocus(batch: any) {
-    if (batch.suggestions.length) {
-      batch.showSuggestions = true;
-    }
-  }
-
-  onBlur(batch: any) {
-    setTimeout(() => {
-      batch.showSuggestions = false;
-    }, 200);
-  }
 }

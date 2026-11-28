@@ -118,29 +118,6 @@
   }
 }
 
-.user-suggestions {
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  margin-top: 0.3rem;
-  background: #fff;
-  max-height: 200px;
-  overflow-y: auto;
-  position: absolute;
-  width: 100%;
-  z-index: 1000;
-}
-
-.suggestion {
-  padding: 0.6rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.suggestion:hover {
-  background: #f1f5f9;
-}
-
-
 .selected-users {
   display: flex;
   flex-wrap: wrap;

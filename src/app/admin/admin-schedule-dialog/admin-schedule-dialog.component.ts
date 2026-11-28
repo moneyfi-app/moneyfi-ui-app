@@ -20,7 +20,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { AdminCommonServiceService } from '../admin-common-service.service';
+import { AdminUsernameAutocompleteComponent } from '../admin-username-autocomplete/admin-username-autocomplete.component';
 
 @Component({
   selector: 'app-admin-schedule-dialog',
@@ -35,14 +35,13 @@ import { AdminCommonServiceService } from '../admin-common-service.service';
     MatDialogModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    AdminUsernameAutocompleteComponent,
   ],
   standalone: true,
   styleUrl: './admin-schedule-dialog.component.css',
 })
 export class AdminScheduleDialogComponent implements OnInit {
   scheduleForm!: FormGroup;
-  searchResults: string[] = [];
-  showSuggestions = false;
   isSubmitting = false;
 
   selectedUsers: string[] = [];
@@ -55,7 +54,6 @@ export class AdminScheduleDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<AdminScheduleDialogComponent>,
     private http: HttpClient,
     private toastr: ToastrService,
-    private adminCommonService: AdminCommonServiceService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
@@ -124,57 +122,14 @@ export class AdminScheduleDialogComponent implements OnInit {
     }
   }
 
-  searchUsers(event: Event) {
-    const input = event.target as HTMLInputElement;
-
-    const query = input.value.trim();
-
-    if (query.length < 2) {
-      this.searchResults = [];
-
-      this.showSuggestions = false;
-
-      return;
-    }
-
-    this.adminCommonService
-      .getUsernames(
-        0,
-
-        10,
-
-        query,
-      )
-
-      .subscribe((data) => {
-        this.searchResults = data.filter(
-          (user) => !this.selectedUsers.includes(user),
-        );
-
-        this.showSuggestions = this.searchResults.length > 0;
-      });
-  }
-
   addUser(user: string) {
     if (!this.selectedUsers.includes(user)) {
       this.selectedUsers.push(user);
     }
-    this.searchResults = [];
-    this.showSuggestions = false;
   }
 
   removeUser(index: number) {
     this.selectedUsers.splice(index, 1);
-  }
-
-  onFocus() {
-    if (this.searchResults.length > 0) {
-      this.showSuggestions = true;
-    }
-  }
-
-  onBlur() {
-    setTimeout(() => (this.showSuggestions = false), 200);
   }
 
   submit() {

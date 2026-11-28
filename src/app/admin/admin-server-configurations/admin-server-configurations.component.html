@@ -43,32 +43,12 @@
     <table>
       <thead>
         <tr>
-          <th>
-            <button type="button" class="sort-button" (click)="changeSort('operationType')">
-              Configuration
-              <span>{{ sortBy === 'operationType' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
-            </button>
-          </th>
+          <th>Configuration</th>
           <th>Value</th>
           <th>Unit</th>
-          <th>
-            <button type="button" class="sort-button" (click)="changeSort('createdBy')">
-              Created By
-              <span>{{ sortBy === 'createdBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
-            </button>
-          </th>
-          <th>
-            <button type="button" class="sort-button" (click)="changeSort('updatedBy')">
-              Updated By
-              <span>{{ sortBy === 'updatedBy' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
-            </button>
-          </th>
-          <th>
-            <button type="button" class="sort-button" (click)="changeSort('lastUpdatedAt')">
-              Last Updated
-              <span>{{ sortBy === 'lastUpdatedAt' ? (sortOrder === 'ASC' ? '▲' : '▼') : '' }}</span>
-            </button>
-          </th>
+          <th>Created By</th>
+          <th>Updated By</th>
+          <th>Last Updated</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -122,20 +102,48 @@
     </div>
 
     <div class="modal-body">
-      <div class="form-group">
-        <label for="operation-type">Configuration type</label>
-        <div id="operation-type" class="read-only-value">{{ formOperationType }}</div>
+      <div class="modal-column">
+        <div class="form-group">
+          <label for="operation-type">Configuration type</label>
+          <div id="operation-type" class="read-only-value">{{ formOperationType }}</div>
+        </div>
+
+        <div class="form-group">
+          <label for="operation-value">Configuration value</label>
+          <textarea
+            id="operation-value"
+            [(ngModel)]="formOperationValue"
+            rows="5"
+            placeholder="Enter configuration value"
+            [disabled]="isSaving"
+          ></textarea>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="operation-value">Configuration value</label>
-        <textarea
-          id="operation-value"
-          [(ngModel)]="formOperationValue"
-          rows="5"
-          placeholder="Enter configuration value"
-          [disabled]="isSaving"
-        ></textarea>
+      <div class="modal-column audience-column">
+        <div class="form-group">
+          <label for="target-users">Target users</label>
+          <div class="audience-controls">
+            <select
+              id="target-users"
+              [(ngModel)]="formTargetUsers"
+              (ngModelChange)="onTargetUsersChange()"
+              [disabled]="isSaving"
+            >
+              <option value="ALL">ALL</option>
+              <option value="SPECIFIC">SPECIFIC</option>
+            </select>
+
+            <app-admin-username-autocomplete
+              *ngIf="formTargetUsers === 'SPECIFIC'"
+              [value]="formUsername"
+              (valueChange)="onUsernameValueChange($event)"
+              (usernameSelected)="selectUsername($event)"
+              [disabled]="isSaving"
+              placeholder="Enter username"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
