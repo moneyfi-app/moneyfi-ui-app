@@ -14,25 +14,12 @@
       <option value="SPECIFIC">Specific</option>
     </select>
 
-    <div class="autocomplete-container">
-      <input
-        type="text"
-        placeholder="Enter username"
-        [disabled]="batch.recipientType !== 'SPECIFIC'"
-        [(ngModel)]="batch.username"
-        (input)="searchUsers(batch)"
-        (focus)="onFocus(batch)"
-        (blur)="onBlur(batch)" />
-
-      <div class="suggestions" *ngIf="batch.showSuggestions">
-        <div
-          class="suggestion"
-          *ngFor="let user of batch.suggestions"
-          (mousedown)="selectUser(batch, user)">
-          {{ user }}
-        </div>
-      </div>
-    </div>
+    <app-admin-username-autocomplete
+      [value]="batch.username"
+      (valueChange)="batch.username = $event"
+      [disabled]="batch.recipientType !== 'SPECIFIC'"
+      placeholder="Enter username"
+    />
 
     <!-- Date picker -->
     <!-- Date picker -->

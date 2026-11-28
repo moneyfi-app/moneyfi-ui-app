@@ -36,12 +36,11 @@ import { MaintainerHomeComponent } from './maintainer-home/maintainer-home.compo
 import { AdminExcelTemplatesComponent } from './admin/admin-excel-templates/admin-excel-templates.component';
 import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.component';
 import { AdminTriggersComponent } from './admin/admin-triggers/admin-triggers.component';
-import { AdminUserSessionTimeComponent } from './admin/admin-user-session-time/admin-user-session-time.component';
 import { AdminFailedQueuesComponent } from './admin/admin-failed-queues/admin-failed-queues.component';
 import { CustomerCareLayoutComponent } from './customer-care/customer-care-layout/customer-care-layout.component';
 import { CustomerCareConversationsComponent } from './customer-care/customer-care-conversations/customer-care-conversations.component';
 import { CustomerCareHomeComponent } from './customer-care/customer-care-home/customer-care-home.component';
-import { AdminAiPromptsComponent } from './admin/admin-ai-prompts/admin-ai-prompts.component';
+import { AdminServerConfigurationsComponent } from './admin/admin-server-configurations/admin-server-configurations.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -79,9 +78,8 @@ export const routes: Routes = [
       { path: 'configuration/categories', component: AdminCategoriesListComponent },
       { path: 'configuration/manage-templates', component: AdminExcelTemplatesComponent },
       { path: 'configuration/manage-triggers', component: AdminTriggersComponent },
-      { path: 'configuration/user-session', component: AdminUserSessionTimeComponent },
       { path: 'configuration/failed-queues', component: AdminFailedQueuesComponent },
-      { path: 'configuration/ai-prompts', component: AdminAiPromptsComponent },
+      { path: 'configuration/server-configurations', component: AdminServerConfigurationsComponent },
     ]
   },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard],children:[

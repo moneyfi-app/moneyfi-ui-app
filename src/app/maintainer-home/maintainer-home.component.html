@@ -248,10 +248,12 @@
     </div>
 
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
-      <button (click)="closeAddModal()" style="padding: 8px 16px;">Cancel</button>
+      <button (click)="closeAddModal()" [disabled]="isCreatingAdmin" style="padding: 8px 16px;">Cancel</button>
       <button (click)="createAdmin()"
+              [disabled]="isCreatingAdmin"
               style="background: #2c7be5; color: white; border: none; padding: 8px 18px; border-radius: 6px;">
-        Create
+        <span *ngIf="isCreatingAdmin" class="button-spinner" aria-hidden="true"></span>
+        {{ isCreatingAdmin ? 'Creating...' : 'Create' }}
       </button>
     </div>
   </div>
@@ -297,10 +299,12 @@
     </div>
 
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
-      <button (click)="closeUpdateModal()" style="padding: 8px 16px;">Cancel</button>
+      <button (click)="closeUpdateModal()" [disabled]="isUpdatingAdmin" style="padding: 8px 16px;">Cancel</button>
       <button (click)="updateAdmin()"
+              [disabled]="isUpdatingAdmin"
               style="background: #f39c12; color: white; border: none; padding: 8px 18px; border-radius: 6px;">
-        Update
+        <span *ngIf="isUpdatingAdmin" class="button-spinner" aria-hidden="true"></span>
+        {{ isUpdatingAdmin ? 'Updating...' : 'Update' }}
       </button>
     </div>
   </div>
